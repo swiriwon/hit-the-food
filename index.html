@@ -11,12 +11,64 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body, #root { height: 100%; }
     html { scrollbar-gutter: stable; }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slideInLeft {
+      from { transform: translateX(-100%); }
+      to { transform: translateX(0); }
+    }
+    @keyframes slideInRight {
+      from { transform: translateX(100%); }
+      to { transform: translateX(0); }
+    }
   </style>
 </head>
 <body>
   <div id="root"></div>
   <script type="text/babel">
     const { useState, useEffect, useRef } = React;
+
+// ── SVG ICONS (Line style like Instacart) ─────────────────────────────────
+const Icon = ({ children, size = 20, strokeWidth = 2 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+    {children}
+  </svg>
+);
+
+const Icons = {
+  Menu: ({ size, sw }) => <Icon size={size} strokeWidth={sw}><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></Icon>,
+  X: ({ size, sw }) => <Icon size={size} strokeWidth={sw}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></Icon>,
+  Search: ({ size, sw }) => <Icon size={size} strokeWidth={sw}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></Icon>,
+  Home: ({ size, sw }) => <Icon size={size} strokeWidth={sw}><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></Icon>,
+  Utensils: ({ size, sw }) => <Icon size={size} strokeWidth={sw}><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></Icon>,
+  CreditCard: ({ size, sw }) => <Icon size={size} strokeWidth={sw}><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></Icon>,
+  Tag: ({ size, sw }) => <Icon size={size} strokeWidth={sw}><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></Icon>,
+  ShoppingCart: ({ size, sw }) => <Icon size={size} strokeWidth={sw}><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></Icon>,
+  Zap: ({ size, sw }) => <Icon size={size} strokeWidth={sw}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></Icon>,
+  Wine: ({ size, sw }) => <Icon size={size} strokeWidth={sw}><path d="M8 22h8"/><path d="M12 11v11"/><path d="M5.3 3h13.4a.5.5 0 0 1 .5.5v1.8a10 10 0 0 1-3.2 7.3 10 10 0 0 1-7 2.9 10 10 0 0 1-7-2.9A10 10 0 0 1 4.8 5.3V3.5a.5.5 0 0 1 .5-.5Z"/></Icon>,
+  ShoppingBag: ({ size, sw }) => <Icon size={size} strokeWidth={sw}><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></Icon>,
+  Newspaper: ({ size, sw }) => <Icon size={size} strokeWidth={sw}><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></Icon>,
+  User: ({ size, sw }) => <Icon size={size} strokeWidth={sw}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></Icon>,
+  ChevronDown: ({ size, sw }) => <Icon size={size} strokeWidth={sw}><polyline points="6 9 12 15 18 9"/></Icon>,
+  MapPin: ({ size, sw }) => <Icon size={size} strokeWidth={sw}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></Icon>,
+  Package: ({ size, sw }) => <Icon size={size} strokeWidth={sw}><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></Icon>,
+  Settings: ({ size, sw }) => <Icon size={size} strokeWidth={sw}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></Icon>,
+  Heart: ({ size, sw }) => <Icon size={size} strokeWidth={sw}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></Icon>,
+  List: ({ size, sw }) => <Icon size={size} strokeWidth={sw}><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></Icon>,
+  Clock: ({ size, sw }) => <Icon size={size} strokeWidth={sw}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></Icon>,
+  Gift: ({ size, sw }) => <Icon size={size} strokeWidth={sw}><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></Icon>,
+  HelpCircle: ({ size, sw }) => <Icon size={size} strokeWidth={sw}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></Icon>,
+  LogOut: ({ size, sw }) => <Icon size={size} strokeWidth={sw}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></Icon>,
+  Store: ({ size, sw }) => <Icon size={size} strokeWidth={sw}><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></Icon>,
+  Pickup: ({ size, sw }) => <Icon size={size} strokeWidth={sw}><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></Icon>,
+  Truck: ({ size, sw }) => <Icon size={size} strokeWidth={sw}><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></Icon>,
+  Pharmacy: ({ size, sw }) => <Icon size={size} strokeWidth={sw}><path d="M8 2h8l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6l4-4Z"/><path d="M12 10v6"/><path d="M9 13h6"/></Icon>,
+  Pets: ({ size, sw }) => <Icon size={size} strokeWidth={sw}><circle cx="11" cy="4" r="2"/><circle cx="18" cy="8" r="2"/><circle cx="20" cy="16" r="2"/><path d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z"/></Icon>,
+  Beauty: ({ size, sw }) => <Icon size={size} strokeWidth={sw}><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"/><path d="M17 4a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2"/></Icon>,
+  Deals: ({ size, sw }) => <Icon size={size} strokeWidth={sw}><circle cx="9" cy="9" r="7"/><circle cx="15" cy="15" r="7"/></Icon>,
+};
 
 const ORANGE_IMG = "data:image/jpeg;base64,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";
 
@@ -517,6 +569,68 @@ const FLYER_PRODUCTS = [
   { id:115, name:"Kraft Real Mayo",                                size:"30 oz",   price:4.29, original:7.49, off:"43% off", badge:null,         img:"https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=300&h=300&fit=crop" },
   { id:116, name:"Heinz Tomato Ketchup",                           size:"32 oz",   price:3.19, original:5.49, off:"42% off", badge:null,         img:"https://images.unsplash.com/photo-1461009312844-e80697a81cc7?w=300&h=300&fit=crop" },
 ];
+
+// ── FLYER STORES (for Flyers page) ────────────────────────────────────────────
+const FLYER_STORES = [
+  {
+    id: "safeway",
+    name: "Safeway",
+    dateRange: "Mar 4-10",
+    color: "#c8102e",
+    flyerImg: "https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=400&h=500&fit=crop",
+    products: [
+      { id:201, name:"Classico Four Cheese Tomato Pasta Sauce", size:"24 oz", price:2.88, original:6.91, off:"58% off", deal:"Buy 2 for $5.76", img:"https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=300&h=300&fit=crop" },
+      { id:202, name:"Classico Tomato & Basil Pasta Sauce", size:"24 oz", price:2.88, original:6.91, off:"58% off", deal:"Buy 2 for $5.76", img:"https://images.unsplash.com/photo-1558818498-28c1e002b655?w=300&h=300&fit=crop" },
+      { id:203, name:"Classico Roasted Garlic & Tomato Spaghetti Pasta Sauce", size:"24 oz", price:2.88, original:6.91, off:"58% off", deal:"Buy 2 for $5.76", img:"https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&h=300&fit=crop" },
+      { id:204, name:"NatureSweet Grape Tomatoes", size:"10 oz", price:2.88, original:4.60, off:"37% off", deal:"Buy 2 for $5.76", img:"https://images.unsplash.com/photo-1607305387299-a3d9611cd469?w=300&h=300&fit=crop" },
+      { id:205, name:"Classico Fire Roasted Tomato & Garlic Spaghetti Pasta Sauce", size:"24 oz", price:2.88, original:6.91, off:"58% off", deal:"Buy 2 for $5.76", img:"https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=300&h=300&fit=crop" },
+      { id:206, name:"Classico Vodka Sauce Tomato Spaghetti Pasta Sauce", size:"24 oz", price:2.88, original:6.91, off:"58% off", deal:"Buy 2 for $5.76", img:"https://images.unsplash.com/photo-1558818498-28c1e002b655?w=300&h=300&fit=crop" },
+      { id:207, name:"Lucerne Butter Salted", size:"16 oz", price:3.49, original:5.99, off:"42% off", deal:"Buy 2 for $6.00", img:"https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?w=300&h=300&fit=crop" },
+      { id:208, name:"Signature Select Ice Cream", size:"1.5 qt", price:2.99, original:5.49, off:"46% off", deal:"Buy 2 for $5.00", img:"https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=300&h=300&fit=crop" },
+      { id:209, name:"O Organics Salad Mix Spring", size:"5 oz", price:3.49, original:4.99, off:"30% off", deal:"Buy 2 for $6.00", img:"https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=300&h=300&fit=crop" },
+      { id:210, name:"Pepsi or Coca-Cola 12 Pack", size:"12 oz cans", price:4.99, original:8.99, off:"44% off", deal:"Limit 4", img:"https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=300&h=300&fit=crop" },
+    ]
+  },
+  {
+    id: "costco",
+    name: "Costco",
+    dateRange: "Mar 2-30",
+    color: "#005DAA",
+    flyerImg: "https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=400&h=500&fit=crop",
+    products: [
+      { id:211, name:"Kellogg's Rice Krispies Treats", size:"0.78 oz, 60-count", price:11.18, original:15.18, off:"26% off", deal:"$4 off; limit 6", img:"https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&h=300&fit=crop", rating:4.5, reviews:651 },
+      { id:212, name:"Heavenly Hunks Organic Oatmeal Dark Chocolate Cookies", size:"22 ct", price:8.70, original:11.70, off:"26% off", deal:"$3 off; limit 10", img:"https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=300&h=300&fit=crop" },
+      { id:213, name:"MadeGood Organic Granola Minis, Variety Pack", size:"0.85 oz, 24-count", price:9.94, original:13.94, off:"29% off", deal:"$4 off; limit 5", img:"https://images.unsplash.com/photo-1517686469429-8bdb88b9f907?w=300&h=300&fit=crop" },
+      { id:214, name:"Perfect Bar Refrigerated Organic Protein Bar, Variety", size:"12-count", price:17.40, original:23.40, off:"26% off", deal:"$6 off; limit 10", img:"https://images.unsplash.com/photo-1622484212850-eb596d769eab?w=300&h=300&fit=crop" },
+      { id:215, name:"Vita Coco, Coconut Water", size:"11.1 fl oz, 18-count", price:21.14, original:26.94, off:"22% off", deal:"$5.80 off; limit 10", img:"https://images.unsplash.com/photo-1525385133512-2f3bdd039054?w=300&h=300&fit=crop", rating:4.5, reviews:1130 },
+      { id:216, name:"Milton's Cauliflower Crust Pizza, Roasted Vegetable", size:"17.8 oz, 2-count", price:12.05, original:16.05, off:"25% off", deal:"$4 off", flavors:"2 flavors", img:"https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=300&h=300&fit=crop" },
+      { id:231, name:"Kirkland Signature Olive Oil Extra Virgin", size:"2L", price:16.99, original:22.99, off:"26% off", deal:"$6 off; limit 5", img:"https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=300&h=300&fit=crop", rating:4.8, reviews:2341 },
+      { id:232, name:"Kirkland Signature Almond Butter", size:"27 oz", price:8.49, original:11.49, off:"26% off", deal:"$3 off; limit 10", img:"https://images.unsplash.com/photo-1612187715882-2ba8a81ba501?w=300&h=300&fit=crop" },
+      { id:233, name:"Tillamook Shredded Cheese Mexican Blend", size:"2.5 lb", price:9.99, original:13.99, off:"29% off", deal:"$4 off; limit 8", img:"https://images.unsplash.com/photo-1618164436241-4473940d1f5c?w=300&h=300&fit=crop", rating:4.6, reviews:892 },
+      { id:234, name:"Starbucks Cold Brew Coffee", size:"11 oz, 6-pack", price:14.99, original:19.99, off:"25% off", deal:"$5 off; limit 6", img:"https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=300&h=300&fit=crop" },
+    ]
+  },
+  {
+    id: "target",
+    name: "Target",
+    dateRange: "Mar 8-14",
+    color: "#CC0000",
+    flyerImg: "https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=400&h=500&fit=crop",
+    products: [
+      { id:221, name:"Good & Gather Organic Whole Milk", size:"64 oz", price:4.99, original:6.49, off:"23% off", deal:"Circle offer", img:"https://images.unsplash.com/photo-1550583724-b2692b85b150?w=300&h=300&fit=crop" },
+      { id:222, name:"Annie's Organic Mac & Cheese", size:"6 oz", price:1.49, original:2.49, off:"40% off", deal:"Buy 3, save $2", img:"https://images.unsplash.com/photo-1543339308-43e59d6b73a6?w=300&h=300&fit=crop" },
+      { id:223, name:"Chobani Greek Yogurt", size:"5.3 oz, 4-pack", price:4.29, original:5.99, off:"28% off", deal:"Circle offer", img:"https://images.unsplash.com/photo-1488477181946-6428a0291777?w=300&h=300&fit=crop" },
+      { id:224, name:"Kind Bars Variety Pack", size:"12 ct", price:9.99, original:14.99, off:"33% off", deal:"$5 off", img:"https://images.unsplash.com/photo-1622484212850-eb596d769eab?w=300&h=300&fit=crop" },
+      { id:225, name:"Banana Organic", size:"1 lb", price:0.69, original:0.99, off:"30% off", deal:"Circle offer", img:"https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=300&h=300&fit=crop" },
+      { id:226, name:"Avocados Hass", size:"4 ct", price:3.99, original:5.49, off:"27% off", deal:"Buy 2, save $1", img:"https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=300&h=300&fit=crop" },
+      { id:227, name:"Good & Gather Cage Free Large Eggs", size:"18 ct", price:4.49, original:6.29, off:"29% off", deal:"Circle offer", img:"https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=300&h=300&fit=crop" },
+      { id:228, name:"Smartwater Vapor Distilled Water", size:"1L, 6-pack", price:6.99, original:9.49, off:"26% off", deal:"Buy 2, save $3", img:"https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=300&h=300&fit=crop" },
+      { id:229, name:"Ben & Jerry's Ice Cream", size:"16 oz", price:4.49, original:6.49, off:"31% off", deal:"Circle offer", img:"https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=300&h=300&fit=crop" },
+      { id:230, name:"Stacy's Pita Chips Simply Naked", size:"7.33 oz", price:2.99, original:4.49, off:"33% off", deal:"Buy 2, save $2", img:"https://images.unsplash.com/photo-1621447504864-d8686e12698c?w=300&h=300&fit=crop" },
+    ]
+  },
+];
+
 const SAVE_STORES = [
   { id:"grocery",  name:"Grocery Outlet",  tag:"Lower prices",        icon:"🛒", color:"#eef7f0" },
   { id:"aldi",     name:"ALDI",            tag:"Everyday low prices", icon:"💰", color:"#fff8e6" },
@@ -645,6 +759,9 @@ const SUGG = [
   { id:204, name:"Baby Bok Choy", price:2.19, img:IMG.bokchoy },
   { id:205, name:"ORION Sweet Corn Turtle Chips", price:5.99, img:IMG.choco },
   { id:206, name:"Pulmuone Soft Tofu", price:2.19, img:IMG.tofu },
+  { id:207, name:"Fresh Broccoli Crown", price:2.49, img:IMG.broccoli },
+  { id:208, name:"Organic Baby Carrots", price:3.29, img:IMG.carrot },
+  { id:209, name:"Shiitake Mushrooms", price:4.99, img:IMG.mushroom },
 ];
 
 const CartDropdown = ({ cart, onAdd, onRemove, cartBtnRef, onClose }) => {
@@ -729,7 +846,7 @@ const CartDropdown = ({ cart, onAdd, onRemove, cartBtnRef, onClose }) => {
         <div style={{ fontWeight:700, fontSize:14, marginBottom:4 }}>Complete your cart</div>
         <div style={{ fontSize:12, color:"#888", marginBottom:12 }}>Based on items in your cart</div>
         <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:10 }}>
-          {SUGG.map(s => (
+          {SUGG.slice(0, 9).map(s => (
             <div key={s.id} style={{ display:"flex", flexDirection:"column" }}>
               <div style={{ position:"relative", width:"100%", paddingBottom:"100%", background:"#f8f7f4", borderRadius:8, overflow:"hidden" }}>
                 <img src={s.img} alt={s.name} style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover" }} />
@@ -779,7 +896,7 @@ const CartDropdown = ({ cart, onAdd, onRemove, cartBtnRef, onClose }) => {
             </div>
           </div>
           
-          <button style={{ width:"100%", background:"#1d7742", color:"white", border:"none", borderRadius:10, padding:"14px 18px", fontSize:15, fontWeight:800, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+          <button style={{ width:"100%", background:"#1d7742", color:"white", border:"none", borderRadius:28, padding:"14px 18px", fontSize:15, fontWeight:800, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
             <span>Go to checkout</span>
             <span>${total.toFixed(2)}</span>
           </button>
@@ -896,12 +1013,14 @@ const StorePage = ({ onHome, cart, onAdd, onRemove, onProductClick }) => {
   const [activeTab, setActiveTab] = useState("All"); // Level 3
   const [browseOpen, setBrowseOpen] = useState(true);
   const [cartOpen, setCartOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [searchFocus, setSearchFocus] = useState(false);
   const cartBtnRef = useRef(null);
   const rootRef = useRef(null);
   const contW = useContainerWidth(rootRef);
   const isNarrow = contW > 0 && contW < 920;
+  const isMobile = contW > 0 && contW < 600;
   const cartCount = Object.values(cart).reduce((a, b) => a + b, 0);
   const cartTotal = Object.entries(cart).reduce((s,[id,q]) => {
     const p = ALL_PRODUCTS.find(x => x.id === Number(id));
@@ -970,9 +1089,15 @@ const StorePage = ({ onHome, cart, onAdd, onRemove, onProductClick }) => {
       {/* Sidebar */}
       {!isNarrow && (
       <aside style={{ width:248, minWidth:248, background:"white", borderRight:"1px solid #efefef", display:"flex", flexDirection:"column", overflowY:"auto", flexShrink:0, position:"sticky", top:0, height:"100vh", paddingLeft:16 }}>
-        {/* Logo */}
-        <div style={{ padding:"22px 18px 18px", borderBottom:"1px solid #f5f5f5", cursor:"pointer" }} onClick={onHome}>
-          <img src={LOGO_IMG} alt="Hit the Food" style={{ height:32, objectFit:"contain" }} />
+        {/* Logo with Hamburger */}
+        <div style={{ padding:"22px 18px 18px", borderBottom:"1px solid #f5f5f5", display:"flex", alignItems:"center", gap:12 }}>
+          <button 
+            onClick={() => setAccountOpen(true)}
+            style={{ background:"none", border:"none", cursor:"pointer", padding:4, display:"flex", alignItems:"center", justifyContent:"center", color:"#333" }}
+          >
+            <Icons.Menu size={22} sw={2.2} />
+          </button>
+          <img src={LOGO_IMG} alt="Hit the Food" style={{ height:32, objectFit:"contain", cursor:"pointer" }} onClick={onHome} />
         </div>
 
         {/* Store badge */}
@@ -1070,6 +1195,15 @@ const StorePage = ({ onHome, cart, onAdd, onRemove, onProductClick }) => {
         {/* Header */}
         <header style={{ background:"white", borderBottom:"1px solid #efefef", padding:"14px 28px", flexShrink:0, zIndex:100, position:"sticky", top:0 }}>
           <div style={{ display:"flex", alignItems:"center", gap:14 }}>
+            {/* Hamburger for narrow/mobile */}
+            {isNarrow && (
+              <button 
+                onClick={() => setAccountOpen(true)}
+                style={{ background:"none", border:"none", cursor:"pointer", padding:4, display:"flex", alignItems:"center", justifyContent:"center", color:"#333", flexShrink:0 }}
+              >
+                <Icons.Menu size={22} sw={2.2} />
+              </button>
+            )}
             {isNarrow && (
               <img src={LOGO_IMG} alt="Hit the Food" style={{ height:24, objectFit:"contain", flexShrink:0, cursor:"pointer" }} onClick={onHome} />
             )}
@@ -1090,7 +1224,9 @@ const StorePage = ({ onHome, cart, onAdd, onRemove, onProductClick }) => {
             
             {/* Search bar - flex to fill available space */}
             <div style={{ flex:1, position:"relative", minWidth:200 }}>
-              <span style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", fontSize:15, color:"#aaa", pointerEvents:"none" }}>🔍</span>
+              <svg style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", pointerEvents:"none" }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
               <input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
@@ -1108,6 +1244,7 @@ const StorePage = ({ onHome, cart, onAdd, onRemove, onProductClick }) => {
             </div>
             
             {/* Delivery / Pickup Toggle */}
+            {!isMobile && (
             <div style={{ display:"flex", background:"#f5f5f5", borderRadius:30, padding:4, flexShrink:0 }}>
               <button 
                 onClick={() => {}}
@@ -1125,18 +1262,21 @@ const StorePage = ({ onHome, cart, onAdd, onRemove, onProductClick }) => {
                 }}
               >Pickup</button>
             </div>
+            )}
             
             {/* Time and Address */}
+            {!isMobile && (
             <div style={{ display:"flex", alignItems:"center", gap:6, cursor:"pointer", flexShrink:0 }}>
-              <span style={{ fontSize:16 }}>🕐</span>
+              <span style={{ display:"flex", alignItems:"center", color:"#666" }}><Icons.Clock size={18} sw={2} /></span>
               <div>
                 <div style={{ fontSize:13, fontWeight:600, color:"#111" }}>Today, 11am <span style={{ fontSize:10, color:"#888" }}>ⓘ</span></div>
                 <div style={{ fontSize:12, color:"#666" }}>150 Grant Avenue <span style={{ fontSize:10 }}>▾</span></div>
               </div>
             </div>
+            )}
             
             {/* Free Delivery Progress Bar */}
-            {(() => {
+            {!isMobile && (() => {
               const freeDeliveryThreshold = 35;
               const remaining = Math.max(0, freeDeliveryThreshold - cartTotal);
               const isFree = cartTotal >= freeDeliveryThreshold;
@@ -1169,7 +1309,7 @@ const StorePage = ({ onHome, cart, onAdd, onRemove, onProductClick }) => {
             {/* Cart */}
             <div style={{ position:"relative", flexShrink:0 }} ref={cartBtnRef}>
               <button
-                onClick={() => setCartOpen(o => !o)}
+                onClick={() => setCartOpen(true)}
                 style={{ 
                   background: cartCount > 0 ? "#003d2b" : "#f7f7f7", 
                   color: cartCount > 0 ? "white" : "#555",
@@ -1179,15 +1319,9 @@ const StorePage = ({ onHome, cart, onAdd, onRemove, onProductClick }) => {
                   transition:"background 0.15s" 
                 }}
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={cartCount>0?"white":"#555"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-                </svg>
+                <Icons.ShoppingCart size={18} sw={2.5} />
                 {cartCount}
               </button>
-              {cartOpen && (
-                <CartDropdown cart={cart} onAdd={onAdd} onRemove={onRemove} cartBtnRef={cartBtnRef} onClose={() => setCartOpen(false)} />
-              )}
             </div>
           </div>
           
@@ -1341,6 +1475,310 @@ const StorePage = ({ onHome, cart, onAdd, onRemove, onProductClick }) => {
           )}
         </div>
       </div>
+
+      {/* ── ACCOUNT SLIDE PANEL (Left) ── */}
+      {accountOpen && (
+        <>
+          {/* Overlay */}
+          <div 
+            onClick={() => setAccountOpen(false)}
+            style={{
+              position:"fixed", inset:0, background:"rgba(0,0,0,0.5)",
+              zIndex:200, animation:"fadeIn 0.2s ease"
+            }}
+          />
+          {/* Panel */}
+          <div style={{
+            position:"fixed", top:0, left:0, bottom:0, width: isMobile ? "85%" : 320,
+            background:"white", zIndex:201, overflowY:"auto",
+            boxShadow:"4px 0 24px rgba(0,0,0,0.15)",
+            animation:"slideInLeft 0.25s ease"
+          }}>
+            {/* Header */}
+            <div style={{ padding:"20px 24px", borderBottom:"1px solid #f0f0f0", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+              <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+                <div style={{ width:44, height:44, borderRadius:"50%", background:"#1d7742", display:"flex", alignItems:"center", justifyContent:"center", color:"white", fontWeight:800, fontSize:16 }}>W</div>
+                <div>
+                  <div style={{ fontWeight:700, fontSize:15, color:"#111" }}>wonsil j.</div>
+                  <div style={{ fontSize:12, color:"#888" }}>Customer since May 2021</div>
+                </div>
+              </div>
+              <button onClick={() => setAccountOpen(false)} style={{ background:"none", border:"none", cursor:"pointer", padding:8, color:"#666" }}>
+                <Icons.X size={22} sw={2} />
+              </button>
+            </div>
+
+            {/* Promo Banner */}
+            <div style={{ margin:"16px 20px", padding:"14px 18px", background:"#1d7742", borderRadius:12, color:"white" }}>
+              <div style={{ fontWeight:800, fontSize:13, marginBottom:4 }}>Instacart+ perk alert!</div>
+              <div style={{ fontSize:11, opacity:0.9, lineHeight:1.4 }}>$0 delivery fee on grocery and retail orders of $10+. Service fees apply. $35 min. for Costco.</div>
+            </div>
+
+            {/* Menu Sections */}
+            <div style={{ padding:"12px 8px" }}>
+              <div style={{ padding:"8px 16px", fontSize:10, color:"#999", fontWeight:700, letterSpacing:"0.8px", textTransform:"uppercase" }}>Manage your account</div>
+              {[
+                { icon: Icons.Store, label:"Stores", active:true },
+                { icon: Icons.Package, label:"Your orders" },
+                { icon: Icons.List, label:"Your lists" },
+                { icon: Icons.Heart, label:"Your recipes" },
+                { icon: Icons.Settings, label:"Your account settings" },
+                { icon: Icons.Zap, label:"Try Instacart+" },
+                { icon: Icons.User, label:"Start a family account" },
+              ].map(({ icon: IconComp, label, active }) => (
+                <div key={label} style={{
+                  padding:"12px 16px", display:"flex", alignItems:"center", gap:14,
+                  cursor:"pointer", borderRadius:10, margin:"2px 0",
+                  background: active ? "#eef9f3" : "transparent",
+                  color: active ? "#003d2b" : "#333", fontWeight: active ? 700 : 500, fontSize:14,
+                }}>
+                  <IconComp size={20} sw={active ? 2.4 : 2} />
+                  {label}
+                </div>
+              ))}
+            </div>
+
+            <div style={{ height:1, background:"#f0f0f0", margin:"8px 20px" }} />
+
+            <div style={{ padding:"12px 8px" }}>
+              <div style={{ padding:"8px 16px", fontSize:10, color:"#999", fontWeight:700, letterSpacing:"0.8px", textTransform:"uppercase" }}>Credits and promos</div>
+              {[
+                { icon: Icons.Gift, label:"Invite friends, earn money", highlight:true },
+                { icon: Icons.CreditCard, label:"Buy gift cards" },
+                { icon: Icons.Tag, label:"Credits, promos, and gift cards" },
+                { icon: Icons.CreditCard, label:"Apply: Instacart Mastercard" },
+              ].map(({ icon: IconComp, label, highlight }) => (
+                <div key={label} style={{
+                  padding:"12px 16px", display:"flex", alignItems:"center", gap:14,
+                  cursor:"pointer", borderRadius:10, margin:"2px 0",
+                  color: highlight ? "#1d7742" : "#333", fontWeight:500, fontSize:14,
+                }}>
+                  <IconComp size={20} sw={2} />
+                  {label}
+                </div>
+              ))}
+            </div>
+
+            <div style={{ height:1, background:"#f0f0f0", margin:"8px 20px" }} />
+
+            <div style={{ padding:"12px 8px" }}>
+              <div style={{ padding:"8px 16px", fontSize:10, color:"#999", fontWeight:700, letterSpacing:"0.8px", textTransform:"uppercase" }}>Support</div>
+              {[
+                { icon: Icons.HelpCircle, label:"Help Center" },
+                { icon: Icons.HelpCircle, label:"How Instacart works" },
+              ].map(({ icon: IconComp, label }) => (
+                <div key={label} style={{
+                  padding:"12px 16px", display:"flex", alignItems:"center", gap:14,
+                  cursor:"pointer", borderRadius:10, margin:"2px 0",
+                  color:"#333", fontWeight:500, fontSize:14,
+                }}>
+                  <IconComp size={20} sw={2} />
+                  {label}
+                </div>
+              ))}
+            </div>
+
+            <div style={{ height:1, background:"#f0f0f0", margin:"8px 20px" }} />
+
+            <div style={{ padding:"12px 8px 24px" }}>
+              <div style={{ padding:"8px 16px", fontSize:10, color:"#999", fontWeight:700, letterSpacing:"0.8px", textTransform:"uppercase" }}>Our apps</div>
+              {[
+                { icon: Icons.ShoppingBag, label:"App Store" },
+                { icon: Icons.ShoppingBag, label:"Google Play" },
+              ].map(({ icon: IconComp, label }) => (
+                <div key={label} style={{
+                  padding:"12px 16px", display:"flex", alignItems:"center", gap:14,
+                  cursor:"pointer", borderRadius:10, margin:"2px 0",
+                  color:"#333", fontWeight:500, fontSize:14,
+                }}>
+                  <IconComp size={20} sw={2} />
+                  {label}
+                </div>
+              ))}
+
+              <div style={{ marginTop:16, padding:"12px 16px", display:"flex", alignItems:"center", gap:14, cursor:"pointer", borderRadius:10, color:"#333", fontWeight:500, fontSize:14 }}>
+                <Icons.LogOut size={20} sw={2} />
+                Log out
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div style={{ padding:"16px 24px", borderTop:"1px solid #f0f0f0", fontSize:11, color:"#999" }}>
+              Press · Jobs · Terms · Privacy
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ── CART SLIDE PANEL (Right) ── */}
+      {cartOpen && (
+        <>
+          {/* Overlay */}
+          <div 
+            onClick={() => setCartOpen(false)}
+            style={{
+              position:"fixed", inset:0, background:"rgba(0,0,0,0.5)",
+              zIndex:200, animation:"fadeIn 0.2s ease"
+            }}
+          />
+          {/* Panel */}
+          <div style={{
+            position:"fixed", top:0, right:0, bottom:0, width: isMobile ? "90%" : 400,
+            background:"white", zIndex:201,
+            boxShadow:"-4px 0 24px rgba(0,0,0,0.15)",
+            animation:"slideInRight 0.25s ease",
+            display:"flex", flexDirection:"column"
+          }}>
+            {/* Header */}
+            <div style={{ padding:"16px 20px", borderBottom:"1px solid #f0f0f0", display:"flex", alignItems:"center", justifyContent:"space-between", flexShrink:0 }}>
+              <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                <button onClick={() => setCartOpen(false)} style={{ background:"none", border:"none", cursor:"pointer", padding:0, color:"#555", display:"flex", alignItems:"center", fontSize:14 }}>
+                  ✕
+                </button>
+                <span style={{ fontWeight:600, fontSize:14, color:"#111" }}>Personal Mega Mart Cart</span>
+              </div>
+              <div style={{ fontSize:12, color:"#888" }}>Shopping in 94306</div>
+            </div>
+
+            {/* Store badge and total */}
+            <div style={{ padding:"14px 20px", borderBottom:"1px solid #f0f0f0", display:"flex", alignItems:"center", gap:12, flexShrink:0 }}>
+              <div style={{ width:40, height:40, background:"#c8102e", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", fontWeight:900, fontSize:8, color:"white", lineHeight:1.1, textAlign:"center", flexShrink:0 }}>
+                MEGA<br/>MART
+              </div>
+              <div style={{ flex:1 }}>
+                <div style={{ fontWeight:700, fontSize:14, color:"#111" }}>Mega Mart</div>
+                <div style={{ fontSize:12, color:"#888" }}>Today, 11am</div>
+              </div>
+              <span style={{ fontWeight:800, fontSize:16, color:"#111" }}>${cartTotal.toFixed(2)}</span>
+            </div>
+
+            {/* Cart Content */}
+            <div style={{ flex:1, overflowY:"auto", padding:"12px 20px" }}>
+              {cartCount === 0 ? (
+                <div style={{ textAlign:"center", padding:"60px 20px" }}>
+                  <div style={{ fontSize:48, marginBottom:16 }}>🛒</div>
+                  <div style={{ fontWeight:700, fontSize:18, color:"#111", marginBottom:8 }}>Your cart is empty</div>
+                  <div style={{ fontSize:14, color:"#888" }}>Start shopping to add items</div>
+                </div>
+              ) : (
+                <>
+                  {/* Cart Items */}
+                  <div style={{ marginBottom:8 }}>
+                    {Object.entries(cart).map(([id, qty]) => {
+                      const product = ALL_PRODUCTS.find(p => p.id === Number(id));
+                      if (!product) return null;
+                      return (
+                        <div key={id} style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 0", borderBottom:"1px solid #f0f0f0" }}>
+                          <div style={{ width:52, height:52, background:"#fff", borderRadius:8, border:"1px solid #e8e8e8", overflow:"hidden", flexShrink:0 }}>
+                            <img src={product.img} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+                          </div>
+                          <div style={{ flex:1, minWidth:0 }}>
+                            <div style={{ fontSize:14, fontWeight:600, color:"#111", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{product.name}</div>
+                            <div style={{ fontSize:13, color:"#888", marginTop:2 }}>${product.price.toFixed(2)}</div>
+                            <button style={{ fontSize:12, color:"#2d6a4f", background:"none", border:"none", cursor:"pointer", padding:0, marginTop:4, display:"flex", alignItems:"center", gap:4 }}>
+                              <span>↻</span> Choose replacement
+                            </button>
+                          </div>
+                          <div style={{ display:"flex", alignItems:"center", gap:6, flexShrink:0 }}>
+                            <button onClick={() => onRemove(Number(id))} style={{ width:32, height:32, borderRadius:"50%", border:"1.5px solid #ddd", background:"white", cursor:"pointer", fontWeight:700, fontSize:18, display:"flex", alignItems:"center", justifyContent:"center", color:"#333" }}>−</button>
+                            <span style={{ fontWeight:700, fontSize:15, minWidth:24, textAlign:"center" }}>{qty}</span>
+                            <button onClick={() => onAdd(Number(id))} style={{ width:32, height:32, borderRadius:"50%", border:"none", background:"#1d7742", color:"white", cursor:"pointer", fontWeight:700, fontSize:18, display:"flex", alignItems:"center", justifyContent:"center" }}>+</button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Make this order a gift */}
+                  <div style={{ padding:"14px 0", display:"flex", alignItems:"center", justifyContent:"space-between", borderBottom:"1px solid #f0f0f0" }}>
+                    <span style={{ fontSize:13, color:"#555", display:"flex", alignItems:"center", gap:8 }}>🎁 Make this order a gift</span>
+                    <div style={{ width:42, height:24, background:"#d1d5db", borderRadius:12, cursor:"pointer", position:"relative" }}>
+                      <div style={{ width:20, height:20, background:"white", borderRadius:"50%", position:"absolute", top:2, left:2, boxShadow:"0 1px 3px rgba(0,0,0,0.2)" }} />
+                    </div>
+                  </div>
+
+                  {/* Complete your cart */}
+                  <div style={{ marginTop:16, paddingBottom:20 }}>
+                    <div style={{ fontWeight:700, fontSize:14, marginBottom:4 }}>Complete your cart</div>
+                    <div style={{ fontSize:12, color:"#888", marginBottom:12 }}>Based on items in your cart</div>
+                    <div style={{ display:"grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(3,1fr)", gap:10 }}>
+                      {SUGG.slice(0, isMobile ? 6 : 9).map(s => (
+                        <div key={s.id} style={{ display:"flex", flexDirection:"column" }}>
+                          <div style={{ position:"relative", width:"100%", paddingBottom:"100%", background:"#f8f7f4", borderRadius:8, overflow:"hidden" }}>
+                            <img src={s.img} alt={s.name} style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover" }} />
+                            <div style={{ position:"absolute", top:4, right:4 }}>
+                              <button onClick={() => onAdd(s.id)} style={{ width:24, height:24, borderRadius:"50%", background:"#1d7742", border:"none", color:"white", fontWeight:800, cursor:"pointer", fontSize:14, display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 1px 4px rgba(0,0,0,0.2)" }}>+</button>
+                            </div>
+                          </div>
+                          <div style={{ fontSize:11, fontWeight:800, marginTop:4 }}>${s.price.toFixed(2)}</div>
+                          <div style={{ fontSize:10, color:"#444", lineHeight:1.35, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" }}>{s.name}</div>
+                          {s.sponsored && <div style={{ fontSize:9, color:"#bbb" }}>Sponsored</div>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Sticky Footer with checkout */}
+            {cartCount > 0 && (
+              <div style={{ 
+                padding:"16px 20px 24px", 
+                borderTop:"1px solid #e8e8e8", 
+                background:"white", 
+                flexShrink:0
+              }}>
+                {/* Free delivery progress bar */}
+                {(() => {
+                  const freeDeliveryThreshold = 35;
+                  const remaining = Math.max(0, freeDeliveryThreshold - cartTotal);
+                  const isFree = cartTotal >= freeDeliveryThreshold;
+                  const progress = Math.min(100, (cartTotal / freeDeliveryThreshold) * 100);
+                  
+                  return (
+                    <div style={{ 
+                      background: isFree ? "#003d2b" : "#f0f0f0", 
+                      borderRadius:30, padding:"12px 16px", marginBottom:14,
+                      display:"flex", alignItems:"center", justifyContent:"space-between",
+                      transition:"background 0.3s"
+                    }}>
+                      <div style={{ flex:1, marginRight:12 }}>
+                        <div style={{ fontSize:13, color: isFree ? "white" : "#333", fontWeight:600 }}>
+                          {isFree 
+                            ? "You're getting $0 delivery fee" 
+                            : `Add $${remaining.toFixed(2)} to get $0 delivery fee`}
+                        </div>
+                        {!isFree && (
+                          <div style={{ marginTop:6, height:4, background:"#ddd", borderRadius:2, overflow:"hidden" }}>
+                            <div style={{ width:`${progress}%`, height:"100%", background:"#003d2b", borderRadius:2, transition:"width 0.3s" }} />
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ 
+                        display:"flex", alignItems:"center", gap:4,
+                        color: isFree ? "white" : "#003d2b", fontWeight:800, fontSize:14
+                      }}>
+                        <Icons.ShoppingCart size={18} sw={2.5} />
+                        {cartCount}
+                      </div>
+                    </div>
+                  );
+                })()}
+                
+                <button style={{ 
+                  width:"100%", background:"#1d7742", color:"white", border:"none", 
+                  borderRadius:28, padding:"16px 20px", fontSize:16, fontWeight:800, 
+                  cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"space-between" 
+                }}>
+                  <span>Go to checkout</span>
+                  <span>${cartTotal.toFixed(2)}</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 };
@@ -1516,6 +1954,8 @@ const MainPage = ({ onStoreClick, cart, onAdd, onRemove, onProductClick }) => {
   const [searchFocus, setSearchFocus] = useState(false);
   const [navActive, setNavActive]   = useState("Home");
   const [cartOpen, setCartOpen]     = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [showMore, setShowMore]     = useState(false);
   const rootRef  = useRef(null);
   const cartBtnRef = useRef(null);
   const winW     = useContainerWidth(rootRef);
@@ -1550,14 +1990,24 @@ const MainPage = ({ onStoreClick, cart, onAdd, onRemove, onProductClick }) => {
   const cartCount = Object.values(cart).reduce((a,b)=>a+b, 0);
 
   const NAV_ITEMS = [
-    { icon:"🏠", label:"Home" },
-    { icon:"🍽️", label:"Restaurants" },
-    { icon:"💳", label:"EBT" },
-    { icon:"🏷️", label:"Offers" },
-    { icon:"🛒", label:"Grocery" },
-    { icon:"⚡", label:"Convenience" },
-    { icon:"🍷", label:"Alcohol" },
-    { icon:"🛍️", label:"Retail" },
+    { icon: Icons.Home, label:"Home" },
+    { icon: Icons.Utensils, label:"Restaurants" },
+    { icon: Icons.CreditCard, label:"EBT" },
+    { icon: Icons.Tag, label:"Offers" },
+    { icon: Icons.ShoppingCart, label:"Grocery" },
+    { icon: Icons.Zap, label:"Convenience" },
+    { icon: Icons.Wine, label:"Alcohol" },
+    { icon: Icons.ShoppingBag, label:"Retail" },
+  ];
+
+  const NAV_MORE = [
+    { icon: Icons.Pickup, label:"Pickup" },
+    { icon: Icons.Truck, label:"Local" },
+    { icon: Icons.Package, label:"Wholesale" },
+    { icon: Icons.Pharmacy, label:"Pharmacy" },
+    { icon: Icons.Pets, label:"Pets" },
+    { icon: Icons.Beauty, label:"Beauty" },
+    { icon: Icons.Gift, label:"Gifts" },
   ];
 
   const SectionHeader = ({ title, sub, cta }) => (
@@ -1589,19 +2039,28 @@ const MainPage = ({ onStoreClick, cart, onAdd, onRemove, onProductClick }) => {
           transition:"width 0.2s",
           paddingLeft: isTablet ? 0 : 16,
         }}>
-          {/* Logo */}
+          {/* Logo with Hamburger */}
           <div style={{
             padding: isTablet ? "20px 0" : "22px 18px 18px",
             borderBottom:"1px solid #f5f5f5",
             display:"flex", alignItems:"center",
             justifyContent: isTablet ? "center" : "flex-start",
+            gap:12,
           }}>
+            {!isTablet && (
+              <button 
+                onClick={() => setAccountOpen(true)}
+                style={{ background:"none", border:"none", cursor:"pointer", padding:4, display:"flex", alignItems:"center", justifyContent:"center", color:"#333" }}
+              >
+                <Icons.Menu size={22} sw={2.2} />
+              </button>
+            )}
             <img src={LOGO_IMG} alt="Hit the Food" style={{ height: isTablet ? 28 : 32, objectFit:"contain" }} />
           </div>
 
           {/* Nav */}
           <nav style={{ padding: isTablet ? "12px 0" : "14px 12px", flex:1 }}>
-            {NAV_ITEMS.map(({ icon, label }) => {
+            {NAV_ITEMS.map(({ icon: IconComp, label }) => {
               const active = navActive === label;
               return (
                 <div key={label} onClick={() => setNavActive(label)}
@@ -1616,11 +2075,51 @@ const MainPage = ({ onStoreClick, cart, onAdd, onRemove, onProductClick }) => {
                     background: active ? "#eef9f3" : "transparent",
                     transition:"all 0.15s",
                   }}>
-                  <span style={{ fontSize:18, flexShrink:0 }}>{icon}</span>
+                  <span style={{ flexShrink:0, display:"flex", alignItems:"center" }}>
+                    <IconComp size={20} sw={active ? 2.4 : 2} />
+                  </span>
                   {!isTablet && label}
                 </div>
               );
             })}
+
+            {/* Show more/less */}
+            {!isTablet && (
+              <>
+                <div 
+                  onClick={() => setShowMore(!showMore)}
+                  style={{
+                    padding:"11px 16px", cursor:"pointer", display:"flex", alignItems:"center",
+                    gap:12, borderRadius:10, margin:"2px 0", fontWeight:500, fontSize:14.5, color:"#444",
+                    transition:"all 0.15s",
+                  }}>
+                  <span style={{ flexShrink:0, display:"flex", alignItems:"center", transform: showMore ? "rotate(180deg)" : "rotate(0)", transition:"transform 0.2s" }}>
+                    <Icons.ChevronDown size={20} sw={2} />
+                  </span>
+                  {showMore ? "Show less" : "Show more"}
+                </div>
+
+                {showMore && NAV_MORE.map(({ icon: IconComp, label }) => {
+                  const active = navActive === label;
+                  return (
+                    <div key={label} onClick={() => setNavActive(label)}
+                      style={{
+                        padding:"11px 16px", cursor:"pointer", display:"flex", alignItems:"center",
+                        gap:12, borderRadius:10, margin:"2px 0",
+                        fontWeight: active ? 700 : 500, fontSize:14.5,
+                        color: active ? "#003d2b" : "#444",
+                        background: active ? "#eef9f3" : "transparent",
+                        transition:"all 0.15s",
+                      }}>
+                      <span style={{ flexShrink:0, display:"flex", alignItems:"center" }}>
+                        <IconComp size={20} sw={active ? 2.4 : 2} />
+                      </span>
+                      {label}
+                    </div>
+                  );
+                })}
+              </>
+            )}
           </nav>
 
           {!isTablet && (
@@ -1629,15 +2128,28 @@ const MainPage = ({ onStoreClick, cart, onAdd, onRemove, onProductClick }) => {
               <div style={{ padding:"14px 12px 20px" }}>
                 <div style={{ padding:"6px 16px 8px", fontSize:10, color:"#bbb", fontWeight:700, letterSpacing:"0.8px", textTransform:"uppercase" }}>You</div>
                 {[
-                  { icon:"📰", label:"Flyers", badge:"New" },
-                  { icon:"👤", label:"Account" },
-                ].map(({ icon, label, badge }) => (
-                  <div key={label} style={{ padding:"11px 16px", cursor:"pointer", display:"flex", alignItems:"center", gap:12, fontSize:14.5, color:"#444", borderRadius:10, margin:"2px 0", fontWeight:500, transition:"all 0.15s" }}>
-                    <span style={{ fontSize:18 }}>{icon}</span>
-                    {label}
-                    {badge && <span style={{ marginLeft:"auto", background:"linear-gradient(135deg, #0d5c3f 0%, #0a4a33 100%)", color:"white", borderRadius:20, fontSize:9, fontWeight:800, padding:"3px 9px" }}>{badge}</span>}
-                  </div>
-                ))}
+                  { icon: Icons.Newspaper, label:"Flyers", badge:"New" },
+                  { icon: Icons.User, label:"Account" },
+                ].map(({ icon: IconComp, label, badge }) => {
+                  const isActive = navActive === label;
+                  return (
+                    <div key={label} 
+                      onClick={() => label === "Account" ? setAccountOpen(true) : setNavActive(label)}
+                      style={{ 
+                        padding:"11px 16px", cursor:"pointer", display:"flex", alignItems:"center", gap:12, 
+                        fontSize:14.5, color: isActive ? "#003d2b" : "#444", borderRadius:10, margin:"2px 0", 
+                        fontWeight: isActive ? 700 : 500, 
+                        background: isActive ? "#eef9f3" : "transparent",
+                        transition:"all 0.15s" 
+                      }}>
+                      <span style={{ flexShrink:0, display:"flex", alignItems:"center" }}>
+                        <IconComp size={20} sw={isActive ? 2.4 : 2} />
+                      </span>
+                      {label}
+                      {badge && !isActive && <span style={{ marginLeft:"auto", background:"linear-gradient(135deg, #0d5c3f 0%, #0a4a33 100%)", color:"white", borderRadius:20, fontSize:9, fontWeight:800, padding:"3px 9px" }}>{badge}</span>}
+                    </div>
+                  );
+                })}
               </div>
             </>
           )}
@@ -1645,21 +2157,32 @@ const MainPage = ({ onStoreClick, cart, onAdd, onRemove, onProductClick }) => {
       )}
 
       {/* ── MAIN CONTENT ── */}
-      <main style={{ flex:1, minWidth:0, overflowX:"hidden", width:"100%" }}>
+      <div style={{ flex:1, minWidth:0, display:"flex", flexDirection:"column" }}>
 
         {/* Sticky Header */}
         <header style={{
           background:"white", borderBottom:"1px solid #f0f0f0",
           padding: `12px ${rightPad}px 12px ${leftPad}px`,
           display:"flex", alignItems:"center", gap:12,
-          position:"sticky", top:0, zIndex:50,
+          position:"sticky", top:0, zIndex:50, flexShrink:0,
         }}>
+          {/* Hamburger menu for mobile */}
+          {isMobile && (
+            <button 
+              onClick={() => setAccountOpen(true)}
+              style={{ background:"none", border:"none", cursor:"pointer", padding:4, display:"flex", alignItems:"center", justifyContent:"center", color:"#333", flexShrink:0 }}
+            >
+              <Icons.Menu size={22} sw={2.2} />
+            </button>
+          )}
           {isMobile && (
             <img src={LOGO_IMG} alt="Hit the Food" style={{ height:24, objectFit:"contain", flexShrink:0 }} />
           )}
           {/* Search */}
           <div style={{ flex:1, position:"relative" }}>
-            <span style={{ position:"absolute", left:13, top:"50%", transform:"translateY(-50%)", fontSize:15, color:"#aaa", pointerEvents:"none" }}>🔍</span>
+            <svg style={{ position:"absolute", left:13, top:"50%", transform:"translateY(-50%)", pointerEvents:"none" }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
@@ -1677,7 +2200,7 @@ const MainPage = ({ onStoreClick, cart, onAdd, onRemove, onProductClick }) => {
           </div>
           {!isMobile && (
             <div style={{ display:"flex", alignItems:"center", gap:4, fontSize:12.5, color:"#333", cursor:"pointer", whiteSpace:"nowrap", flexShrink:0, padding:"8px 10px", borderRadius:8, border:"1.5px solid #ebebeb" }}>
-              <span style={{ fontSize:13 }}>📍</span>
+              <span style={{ display:"flex", alignItems:"center" }}><Icons.MapPin size={14} sw={2.2} /></span>
               <span style={{ fontWeight:500 }}>150 Grant Ave</span>
               <span style={{ fontSize:10, color:"#aaa", marginLeft:1 }}>▼</span>
             </div>
@@ -1685,7 +2208,7 @@ const MainPage = ({ onStoreClick, cart, onAdd, onRemove, onProductClick }) => {
           {/* Cart */}
           <div style={{ position:"relative", flexShrink:0 }} ref={cartBtnRef}>
             <button 
-              onClick={() => setCartOpen(o => !o)}
+              onClick={() => setCartOpen(true)}
               style={{
                 background: cartCount > 0 ? "#003d2b" : "#f7f7f7",
                 color: cartCount > 0 ? "white" : "#555",
@@ -1695,24 +2218,21 @@ const MainPage = ({ onStoreClick, cart, onAdd, onRemove, onProductClick }) => {
                 display:"flex", alignItems:"center", gap:6,
                 transition:"background 0.15s",
               }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={cartCount > 0 ? "white" : "#555"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-              </svg>
+              <Icons.ShoppingCart size={18} sw={2.5} />
               {cartCount > 0
                 ? <span style={{ fontWeight:800 }}>{cartCount} item{cartCount > 1 ? "s" : ""}</span>
                 : <span style={{ fontSize:12 }}>Cart</span>
               }
             </button>
-            {cartOpen && (
-              <MainCartDropdown cart={cart} cartBtnRef={cartBtnRef} onClose={() => setCartOpen(false)} onStoreClick={onStoreClick} />
-            )}
           </div>
         </header>
 
         {/* Scrollable Body — 100% width, fluid padding */}
-        <div style={{ padding:`36px ${rightPad}px 100px ${leftPad}px`, width:"100%" }}>
+        <div style={{ flex:1, padding:`36px ${rightPad}px 100px ${leftPad}px`, width:"100%", overflowY:"auto" }}>
 
+          {/* ── HOME CONTENT ── */}
+          {navActive !== "Flyers" && navActive !== "Account" && (
+          <>
           {/* ── YOUR STORES ── */}
           <section style={{ marginBottom:44 }}>
             <SectionHeader title="Your stores" cta="View all" />
@@ -1844,6 +2364,90 @@ const MainPage = ({ onStoreClick, cart, onAdd, onRemove, onProductClick }) => {
               ))}
             </div>
           </section>
+          </>
+          )}
+
+          {/* ── FLYERS CONTENT ── */}
+          {navActive === "Flyers" && (
+          <>
+            {/* Header */}
+            <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:24 }}>
+              <div>
+                <h1 style={{ fontSize:28, fontWeight:800, color:"#111", marginBottom:6 }}>Flyers</h1>
+                <p style={{ fontSize:13, color:"#888" }}>
+                  Images for demonstration only. Prices and products may vary. 
+                  <span style={{ marginLeft:4, cursor:"pointer" }}>ⓘ</span>
+                </p>
+              </div>
+              <div style={{ display:"flex", alignItems:"center", gap:8, cursor:"pointer", color:"#111", fontSize:14, fontWeight:600 }}>
+                <span style={{ fontSize:16 }}>🔔</span>
+                Notifications
+              </div>
+            </div>
+
+            {/* Store Sections */}
+            {FLYER_STORES.map(store => (
+              <section key={store.id} style={{ marginBottom:40 }}>
+                {/* Store Header */}
+                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16 }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+                    <div style={{ 
+                      width:44, height:44, background: store.color, borderRadius:10, 
+                      display:"flex", alignItems:"center", justifyContent:"center", 
+                      color:"white", fontWeight:900, fontSize:11 
+                    }}>
+                      {store.name.slice(0,2).toUpperCase()}
+                    </div>
+                    <div>
+                      <div style={{ fontWeight:700, fontSize:16, color:"#111" }}>{store.name}</div>
+                      <div style={{ fontSize:13, color:"#666" }}>Flyer deals {store.dateRange}</div>
+                    </div>
+                  </div>
+                  <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+                    <span style={{ fontSize:14, fontWeight:600, color:"#111", cursor:"pointer" }}>Shop flyer ›</span>
+                    <div style={{ display:"flex", gap:6 }}>
+                      <button style={{ width:32, height:32, borderRadius:"50%", border:"1px solid #ddd", background:"white", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, color:"#888" }}>‹</button>
+                      <button style={{ width:32, height:32, borderRadius:"50%", border:"1px solid #ddd", background:"white", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, color:"#888" }}>›</button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Products Row */}
+                <div style={{ display:"flex", gap:flyerGap, overflowX:"auto" }} className="hide-scrollbar">
+                  {/* Flyer Image Card */}
+                  <div style={{ 
+                    width:flyerW, minWidth:flyerW, height: flyerW * 1.5, borderRadius:18, overflow:"hidden", 
+                    background:`linear-gradient(180deg, ${store.color}22 0%, ${store.color}44 100%)`,
+                    display:"flex", flexDirection:"column", justifyContent:"flex-end",
+                    position:"relative", cursor:"pointer", flexShrink:0,
+                    border:"1px solid #e8e8e8"
+                  }}>
+                    <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
+                      <div style={{ 
+                        width: flyerW * 0.5, height: flyerW * 0.5, background: store.color, borderRadius:12, 
+                        display:"flex", alignItems:"center", justifyContent:"center", 
+                        color:"white", fontWeight:900, fontSize: flyerW * 0.1
+                      }}>
+                        {store.name.slice(0,3).toUpperCase()}
+                      </div>
+                    </div>
+                    <div style={{ 
+                      background: store.color, color:"white", padding:"10px 16px", 
+                      textAlign:"center", fontWeight:700, fontSize:13 
+                    }}>
+                      {store.dateRange}
+                    </div>
+                  </div>
+
+                  {/* Product Cards - use FlyerCard component */}
+                  {store.products.slice(0, 10).map(p => (
+                    <FlyerCard key={p.id} p={p} onAdd={onAdd} onRemove={onRemove} cart={cart} w={flyerW} onClick={onProductClick} />
+                  ))}
+                </div>
+              </section>
+            ))}
+          </>
+          )}
 
         </div>
 
@@ -1855,15 +2459,235 @@ const MainPage = ({ onStoreClick, cart, onAdd, onRemove, onProductClick }) => {
             display:"flex", justifyContent:"space-around",
             padding:"8px 0 12px", zIndex:100,
           }}>
-            {[["🏠","Home"],["🔍","Search"],["🛍️","Retail"],["🏷️","Offers"],["👤","Account"]].map(([icon, label]) => (
-              <div key={label} style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:3, cursor:"pointer" }}>
-                <span style={{ fontSize:20 }}>{icon}</span>
-                <span style={{ fontSize:9.5, color:"#888", fontWeight:500 }}>{label}</span>
+            {[
+              { icon: Icons.Home, label:"Home" },
+              { icon: Icons.Search, label:"Search" },
+              { icon: Icons.ShoppingBag, label:"Retail" },
+              { icon: Icons.Tag, label:"Offers" },
+              { icon: Icons.User, label:"Account" },
+            ].map(({ icon: IconComp, label }) => (
+              <div key={label} onClick={() => label === "Account" ? setAccountOpen(true) : setNavActive(label)} style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:3, cursor:"pointer" }}>
+                <span style={{ color: navActive === label ? "#003d2b" : "#888" }}><IconComp size={22} sw={navActive === label ? 2.4 : 1.8} /></span>
+                <span style={{ fontSize:9.5, color: navActive === label ? "#003d2b" : "#888", fontWeight: navActive === label ? 700 : 500 }}>{label}</span>
               </div>
             ))}
           </nav>
         )}
-      </main>
+      </div>
+
+      {/* ── ACCOUNT SLIDE PANEL (Left) ── */}
+      {accountOpen && (
+        <>
+          {/* Overlay */}
+          <div 
+            onClick={() => setAccountOpen(false)}
+            style={{
+              position:"fixed", inset:0, background:"rgba(0,0,0,0.5)",
+              zIndex:200, animation:"fadeIn 0.2s ease"
+            }}
+          />
+          {/* Panel */}
+          <div style={{
+            position:"fixed", top:0, left:0, bottom:0, width: isMobile ? "85%" : 320,
+            background:"white", zIndex:201, overflowY:"auto",
+            boxShadow:"4px 0 24px rgba(0,0,0,0.15)",
+            animation:"slideInLeft 0.25s ease"
+          }}>
+            {/* Header */}
+            <div style={{ padding:"20px 24px", borderBottom:"1px solid #f0f0f0", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+              <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+                <div style={{ width:44, height:44, borderRadius:"50%", background:"#1d7742", display:"flex", alignItems:"center", justifyContent:"center", color:"white", fontWeight:800, fontSize:16 }}>W</div>
+                <div>
+                  <div style={{ fontWeight:700, fontSize:15, color:"#111" }}>wonsil j.</div>
+                  <div style={{ fontSize:12, color:"#888" }}>Customer since May 2021</div>
+                </div>
+              </div>
+              <button onClick={() => setAccountOpen(false)} style={{ background:"none", border:"none", cursor:"pointer", padding:8, color:"#666" }}>
+                <Icons.X size={22} sw={2} />
+              </button>
+            </div>
+
+            {/* Promo Banner */}
+            <div style={{ margin:"16px 20px", padding:"14px 18px", background:"#1d7742", borderRadius:12, color:"white" }}>
+              <div style={{ fontWeight:800, fontSize:13, marginBottom:4 }}>Instacart+ perk alert!</div>
+              <div style={{ fontSize:11, opacity:0.9, lineHeight:1.4 }}>$0 delivery fee on grocery and retail orders of $10+. Service fees apply. $35 min. for Costco.</div>
+            </div>
+
+            {/* Menu Sections */}
+            <div style={{ padding:"12px 8px" }}>
+              <div style={{ padding:"8px 16px", fontSize:10, color:"#999", fontWeight:700, letterSpacing:"0.8px", textTransform:"uppercase" }}>Manage your account</div>
+              {[
+                { icon: Icons.Store, label:"Stores", active:true },
+                { icon: Icons.Package, label:"Your orders" },
+                { icon: Icons.List, label:"Your lists" },
+                { icon: Icons.Heart, label:"Your recipes" },
+                { icon: Icons.Settings, label:"Your account settings" },
+                { icon: Icons.Zap, label:"Try Instacart+" },
+                { icon: Icons.User, label:"Start a family account" },
+              ].map(({ icon: IconComp, label, active }) => (
+                <div key={label} style={{
+                  padding:"12px 16px", display:"flex", alignItems:"center", gap:14,
+                  cursor:"pointer", borderRadius:10, margin:"2px 0",
+                  background: active ? "#eef9f3" : "transparent",
+                  color: active ? "#003d2b" : "#333", fontWeight: active ? 700 : 500, fontSize:14,
+                }}>
+                  <IconComp size={20} sw={active ? 2.4 : 2} />
+                  {label}
+                </div>
+              ))}
+            </div>
+
+            <div style={{ height:1, background:"#f0f0f0", margin:"8px 20px" }} />
+
+            <div style={{ padding:"12px 8px" }}>
+              <div style={{ padding:"8px 16px", fontSize:10, color:"#999", fontWeight:700, letterSpacing:"0.8px", textTransform:"uppercase" }}>Credits and promos</div>
+              {[
+                { icon: Icons.Gift, label:"Invite friends, earn money", highlight:true },
+                { icon: Icons.CreditCard, label:"Buy gift cards" },
+                { icon: Icons.Tag, label:"Credits, promos, and gift cards" },
+                { icon: Icons.CreditCard, label:"Apply: Instacart Mastercard" },
+              ].map(({ icon: IconComp, label, highlight }) => (
+                <div key={label} style={{
+                  padding:"12px 16px", display:"flex", alignItems:"center", gap:14,
+                  cursor:"pointer", borderRadius:10, margin:"2px 0",
+                  color: highlight ? "#1d7742" : "#333", fontWeight:500, fontSize:14,
+                }}>
+                  <IconComp size={20} sw={2} />
+                  {label}
+                </div>
+              ))}
+            </div>
+
+            <div style={{ height:1, background:"#f0f0f0", margin:"8px 20px" }} />
+
+            <div style={{ padding:"12px 8px" }}>
+              <div style={{ padding:"8px 16px", fontSize:10, color:"#999", fontWeight:700, letterSpacing:"0.8px", textTransform:"uppercase" }}>Support</div>
+              {[
+                { icon: Icons.HelpCircle, label:"Help Center" },
+                { icon: Icons.HelpCircle, label:"How Instacart works" },
+              ].map(({ icon: IconComp, label }) => (
+                <div key={label} style={{
+                  padding:"12px 16px", display:"flex", alignItems:"center", gap:14,
+                  cursor:"pointer", borderRadius:10, margin:"2px 0",
+                  color:"#333", fontWeight:500, fontSize:14,
+                }}>
+                  <IconComp size={20} sw={2} />
+                  {label}
+                </div>
+              ))}
+            </div>
+
+            <div style={{ height:1, background:"#f0f0f0", margin:"8px 20px" }} />
+
+            <div style={{ padding:"12px 8px 24px" }}>
+              <div style={{ padding:"8px 16px", fontSize:10, color:"#999", fontWeight:700, letterSpacing:"0.8px", textTransform:"uppercase" }}>Our apps</div>
+              {[
+                { icon: Icons.ShoppingBag, label:"App Store" },
+                { icon: Icons.ShoppingBag, label:"Google Play" },
+              ].map(({ icon: IconComp, label }) => (
+                <div key={label} style={{
+                  padding:"12px 16px", display:"flex", alignItems:"center", gap:14,
+                  cursor:"pointer", borderRadius:10, margin:"2px 0",
+                  color:"#333", fontWeight:500, fontSize:14,
+                }}>
+                  <IconComp size={20} sw={2} />
+                  {label}
+                </div>
+              ))}
+
+              <div style={{ marginTop:16, padding:"12px 16px", display:"flex", alignItems:"center", gap:14, cursor:"pointer", borderRadius:10, color:"#333", fontWeight:500, fontSize:14 }}>
+                <Icons.LogOut size={20} sw={2} />
+                Log out
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div style={{ padding:"16px 24px", borderTop:"1px solid #f0f0f0", fontSize:11, color:"#999" }}>
+              Press · Jobs · Terms · Privacy
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ── CART SLIDE PANEL (Right) ── */}
+      {cartOpen && (
+        <>
+          {/* Overlay */}
+          <div 
+            onClick={() => setCartOpen(false)}
+            style={{
+              position:"fixed", inset:0, background:"rgba(0,0,0,0.5)",
+              zIndex:200, animation:"fadeIn 0.2s ease"
+            }}
+          />
+          {/* Panel */}
+          <div style={{
+            position:"fixed", top:0, right:0, bottom:0, width: isMobile ? "90%" : 400,
+            background:"white", zIndex:201, overflowY:"auto",
+            boxShadow:"-4px 0 24px rgba(0,0,0,0.15)",
+            animation:"slideInRight 0.25s ease",
+            display:"flex", flexDirection:"column"
+          }}>
+            {/* Header */}
+            <div style={{ padding:"16px 20px", borderBottom:"1px solid #f0f0f0", display:"flex", alignItems:"center", justifyContent:"space-between", flexShrink:0 }}>
+              <button onClick={() => setCartOpen(false)} style={{ background:"none", border:"none", cursor:"pointer", padding:8, color:"#666", display:"flex", alignItems:"center" }}>
+                <Icons.X size={24} sw={2} />
+              </button>
+              <div style={{ textAlign:"center" }}>
+                <div style={{ fontWeight:700, fontSize:15, color:"#111" }}>Carts</div>
+                <div style={{ fontSize:12, color:"#888" }}>Shopping in 94306</div>
+              </div>
+              <div style={{ width:40 }} />
+            </div>
+
+            {/* Cart Content */}
+            <div style={{ flex:1, overflowY:"auto", padding:"16px 20px" }}>
+              {cartCount === 0 ? (
+                <div style={{ textAlign:"center", padding:"60px 20px" }}>
+                  <div style={{ fontSize:48, marginBottom:16 }}>🛒</div>
+                  <div style={{ fontWeight:700, fontSize:18, color:"#111", marginBottom:8 }}>Your cart is empty</div>
+                  <div style={{ fontSize:14, color:"#888" }}>Start shopping to add items</div>
+                </div>
+              ) : (
+                <>
+                  {/* Store Cart */}
+                  <div style={{ background:"#f8f8f8", borderRadius:12, padding:16, marginBottom:16 }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:16 }}>
+                      <div style={{ width:44, height:44, background:"#fff", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", fontWeight:800, fontSize:10, color:"#003d2b", border:"1px solid #e8e8e8" }}>
+                        MEGA
+                      </div>
+                      <div>
+                        <div style={{ fontWeight:700, fontSize:14, color:"#111" }}>Mega Mart</div>
+                        <div style={{ fontSize:12, color:"#888" }}>Personal Cart</div>
+                      </div>
+                    </div>
+                    <div style={{ fontSize:12, color:"#1d7742", fontWeight:600, marginBottom:12 }}>+ Delivery by 3:00pm</div>
+                    
+                    {/* Cart Items Preview */}
+                    <div style={{ display:"flex", gap:8, marginBottom:16 }}>
+                      {Object.entries(cart).slice(0, 3).map(([id]) => (
+                        <div key={id} style={{ width:48, height:48, background:"#fff", borderRadius:8, border:"1px solid #e8e8e8" }} />
+                      ))}
+                    </div>
+
+                    <button 
+                      onClick={onStoreClick}
+                      style={{
+                        width:"100%", padding:"14px 20px",
+                        background:"#003d2b", color:"white", border:"none",
+                        borderRadius:12, fontWeight:700, fontSize:14,
+                        cursor:"pointer"
+                      }}
+                    >
+                      Continue Shopping
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };
@@ -2322,6 +3146,14 @@ const ProductDetailModal = ({ product, onClose, cart, onAdd, onRemove, allProduc
           from { opacity: 0; }
           to { opacity: 1; }
         }
+        @keyframes slideInLeft {
+          from { transform: translateX(-100%); }
+          to { transform: translateX(0); }
+        }
+        @keyframes slideInRight {
+          from { transform: translateX(100%); }
+          to { transform: translateX(0); }
+        }
       `}</style>
     </div>
     </>
@@ -2337,7 +3169,8 @@ function App() {
   const remove = id => setCart(p => { const n={...p}; if(n[id]<=1) delete n[id]; else n[id]--; return n; });
   
   // Combine all products for modal
-  const allProducts = [...ALL_PRODUCTS, ...FLYER_PRODUCTS];
+  const flyerStoreProducts = FLYER_STORES.flatMap(s => s.products);
+  const allProducts = [...ALL_PRODUCTS, ...FLYER_PRODUCTS, ...flyerStoreProducts];
   
   const openProduct = (product) => {
     setSelectedProduct(product);
